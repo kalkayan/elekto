@@ -106,6 +106,7 @@ def sync(session, elections):
     log = "---------------------*=  Syncing started =*----------------------\n\n"
 
     # Delete election from the database that are not in the meta anymore
+    elections = session.query(Election).all()
     try:
         elections = session.query(Election).all()
         for election in elections:

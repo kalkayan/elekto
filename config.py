@@ -25,6 +25,9 @@ from distutils.util import strtobool
 # server needs to place appliation's name in the Ui or any other place.
 NAME = env('APP_NAME', 'k8s.elections')
 
+# Application's Environment
+ENV = env('APP_ENV', 'production')
+
 # Encryption Key
 #
 # This is used by the Flask server and should be set to a random character

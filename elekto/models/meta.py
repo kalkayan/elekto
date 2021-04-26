@@ -16,6 +16,7 @@
 
 import os
 import random
+import subprocess
 import flask as F
 
 from datetime import datetime
@@ -45,6 +46,12 @@ class Meta:
 
     def pull(self):
         os.system('{} pull origin {}'.format(self.pref, self.BRANCH))
+
+    def latest_commit_hash(self):
+        return subprocess.check_output('{} log --format="%H" -n 1'.format(self.pref), shell=True).decode("utf-8").strip("\n")
+
+    def latest_commit_msg(self):
+        return subprocess.check_output('{} log --format="%s" -n 1'.format(self.pref), shell=True).decode("utf-8").strip("\n")
 
 
 class Election(Meta):

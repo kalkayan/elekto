@@ -1,5 +1,6 @@
 .vscode
 .venv/
+.vim
 
 # Cache files and directories
 *.pyc
@@ -14,8 +15,10 @@ build/
 *.egg-info/
 
 .env
+.env.dev
 .env.testing
 
 **/*/node_modules
 
+**/*.db
 /meta/

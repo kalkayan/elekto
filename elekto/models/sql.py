@@ -32,12 +32,28 @@ def create_session(url):
             engine, the host, user and password and the database name.
             ie: <engine>://<user>:<password>@<host>/<dbname>
     Returns:
-        (scoped_session): session for the database
+        (sqlalchemy.orm.scoped_session): session for the database
     """
     engine = S.create_engine(url, pool_pre_ping=True)
     session = scoped_session(sessionmaker(bind=engine))
 
     return session
+
+
+def test_connection(session):
+    """
+    Test the database connection for the current session.
+
+    Args:
+        session (object): session object
+
+    """
+    try:
+        session.query(User).first()
+    except S.exc.OperationalError as err:
+        return False, err
+
+    return True, None
 
 
 def migrate(url):

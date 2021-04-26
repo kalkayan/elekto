@@ -1,15 +1,15 @@
-name: test
+name: elekto
 channels:
   - conda-forge
   - defaults
 dependencies:
   - authlib=0.15.2=py_0
   - brotlipy=0.7.0=py36h9ed2024_1003
-  - ca-certificates=2020.12.8=hecd8cb5_0
+  - ca-certificates=2021.4.13=hecd8cb5_1
   - certifi=2020.12.5=py36hecd8cb5_0
   - cffi=1.14.4=py36h2125817_0
   - chardet=3.0.4=py36hecd8cb5_1003
-  - click=7.1.2=pyh9f0ad1d_0
+  - click=7.1.2=pyhd3eb1b0_0
   - cryptography=3.3.1=py36hbcfaee0_0
   - flask=1.1.2=py_0
   - flask-wtf=0.14.3=py_0
@@ -28,7 +28,7 @@ dependencies:
   - mysql-connector-c=6.1.11=hccea1a4_1
   - mysqlclient=2.0.1=py36hb1e8313_0
   - ncurses=6.2=h0a44026_1
-  - openssl=1.1.1i=h9ed2024_0
+  - openssl=1.1.1k=h9ed2024_0
   - pcre=8.44=hb1e8313_0
   - pip=20.3.3=py36hecd8cb5_0
   - pycparser=2.20=py_2
@@ -53,4 +53,4 @@ dependencies:
   - xz=5.2.5=h1de35cc_0
   - yaml=0.2.5=haf1e3a3_0
   - zlib=1.2.11=h1de35cc_3
-prefix: /opt/anaconda3/envs/test
+prefix: /usr/local/anaconda3/envs/elekto

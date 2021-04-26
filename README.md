@@ -1,107 +1,95 @@
-![banner.js](/static/banner.png)
+![banner.js](static/banner.png)
 
-**elekto** is a flask based web application for conducting online elections. It Implements the [condorcet method](https://en.wikipedia.org/wiki/Condorcet_method).
+**elekto** is a flask based web application for conducting online elections. It is built specifically for opensource organisations to help run them steering and community elections.
 
-The project was created as the part of [Cloud Native Computing Foundation's Internship](https://github.com/kubernetes/community/issues/5096) via [The Linux Foundation mentorship](https://docs.linuxfoundation.org/lfx/mentorship) program, to run community and steering elections for CNCF and LF projects.
+Elekto was inspired by the long-running [CIVS](https://civs.cs.cornell.edu) project and built to conduct kubernetes steering and community elections. The project was created as the part of [The Linux Foundation's Internship](https://docs.linuxfoundation.org/lfx/mentorship) and now it's hosted and maintained by [Cloud Native Computing Foundation](https://github.com/cncf/).
 
-## Getting Started
+Elekto is currently used by [Kubernetes](https://github.com/kubernetes/), [Knative](https://github.com/knative/) and [more](https://elekto.io/#td-block-5).
 
-The application requires a [meta]() repository to store election meta files. The meta repository is the single source of truth for the application and is managed by gitops, all the tasks like creating an election, adding/removing voters to the list are managed by raising specific pull requests in the meta repository. See our detailed instruction [docs](/docs/README.md)
+# Features
 
-![architecture.png](/static/arch.png)
+Elekto was designed to support the following:
 
-## To start using elekto
+- 100% GitOps workflow for configuration and election administration
+- 100% Oauth-driven workflow for voters (no emails)
+- Preference election voting (starting with [condorcet](https://en.wikipedia.org/wiki/Condorcet_method))
+- Multiple elections for the same organization
+- Responsive web design
+- Secret ballot voting
 
-#### Create a development environment
 
-The application is written in `python` using `flask` and `sqlalchemy`. This repository ships a `requirements.txt` and a `environment.yml` for conda users.
+# Getting Started
+See our documentation on [elekto.io](https://elekto.io/docs).
 
+
+Create an `.env` file from `.env.example` by running `cp .env.example .env` and update the necessary entires (see [here](https://elekto.io/docs/getting-started/) for more information on env parameters).
+
+If you want to run elekto right away there are two options:
+
+**You have a working conda environment.**
+
+Create an elekto environment
 ```bash
-# Installation with pip
-pip install -r requirements.txt
-
-# Installation with Conda
-conda env create -f environment.yml && conda activate elekto
+conda env create -f environment.yml
 ```
 
-#### Setup env variables
-
-The repository has a `.env.example` file which can be used as a template for `.env` file, update the environment file after copying from `.env.example`.
-
+Run the application using 
 ```bash
-# create a new .env file from .env.example
-cp .env.example .env
+python console run
 ```
 
-Set the basic information about the application in the upper section
+**You have a working Docker environment.**
 
+You can run this application inside a Docker container. This approach doesn't require you to install any dependencies other than Docker.
+
+Build the docker image
 ```bash
-APP_NAME=k8s.elections     # set the name of the application
-APP_ENV=development        # development | production
-APP_KEY=                   # random secret key (!! important !!)
-APP_DEBUG=True             # True | False (production)
-APP_URL=http://localhost   # Url where the application is hosted
-APP_PORT=5000              # Default Running port for development
-APP_HOST=localhost         # Default Host for developmemt
+docker build -f dev.Dockerfile -t elekto:dev .
 ```
 
-Update the database credentials,
-
+Run the built image
 ```bash
-DB_CONNECTION=mysql        # Mysql is only supported
-DB_HOST=localhost
-DB_PORT=3306
-DB_DATABASE=name
-DB_USERNAME=user
-DB_PASSWORD=password
+
+docker run -d -p 5000:5000 --name="eleko" elekto:dev
 ```
 
-Update the meta repository info
+Open your web browser and type http://localhost:5000 in your navigation bar, This opens a local instance of the elekto application's login page. 
+
+<!-- You can now make changes to the docsy example and those changes will immediately show up in your browser after you save. -->
+
+<!-- To stop the container, first identify the container ID with:
 
 ```bash
-META_REPO=https://github.com/elekto-io/elekto.meta.test.git
-META_DEPLOYMENT=local
-META_PATH=meta
-META_BRANCH=main
-META_SECRET=  # same as webhook of the same meta repository
+docker container ls
 ```
 
-Update the Oauth info, create an github oauth app if already not created.
+Take note of the hexadecimal string below the CONTAINER ID column, then stop the container:
 
 ```bash
-GITHUB_REDIRECT=/oauth/github/callback
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
+docker stop [container_id]
 ```
 
-#### Migrate and Sync DB with Meta
-
-The `console` script in the repository is used to perform all the table creations and syncing of the meta.
+To delete the container run:
 
 ```bash
-# to migrate the database from command line
-python console --migrate
-```
+docker container rm [container_id]
+``` -->
 
-To sync the database with the meta files
+For the full story, head over to the developer's documentation.
 
-```bash
-# to the sync the database with the meta
-python console --sync
-```
 
-#### Run the application Server locally
+# Getting Help
 
-The flask server will start on `5000` by default but can be changed using `--port` option.
+The elekto project is maintained by Manish Sahani and Josh Berkus, Reach out to us one way or another.
 
-```bash
-# to run the server on default configs
-python console --run
 
-# to change host and port
-python console --port 8080 --host 0.0.0.0 --run
-```
+# Contributing 
 
-### Support
+We're excited that you're interested in contributing to the elekto software! Check out the resources below to get started.
 
-if you have questions, reach out to us one way or another.
+Please refer to [CONTRIBUTING](CONTRIBUTING.md) for more information on how to best contributed to contribute to elekto.
+
+# Support
+Your help and feedback is always welcome!
+
+If you find an issue let us know, either by clicking the Create Issue on any of the website pages, or by directly opening an issue [here](https://github.com/elekto-io/elekto/issues/new) in the repo.

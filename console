@@ -17,71 +17,159 @@
 # Author(s):         Manish Sahani <rec.manish.sahani@gmail.com>
 
 import os
+import click
+import config
 import argparse
 
 from utils import env
+from elekto import APP, models
 
-parser = argparse.ArgumentParser(description='Run the k8s.elections app')
+"""
+This file provides and command line interface for elekto's adminstration and
+management. This interface provides utilities to manage elekto's database, meta
+and server.
 
-parser.add_argument('-p',
-                    '--port',
-                    default=env('APP_PORT', '5000'),
-                    help='Port for the flask application.')
+Run: `python console --help` for more information on usage.
+"""
 
-parser.add_argument('--host',
-                    default=env('APP_HOST', '127.0.0.1'),
-                    help='Hostname to listen on. When set to 0.0.0.0 the \
-                    server is available externally. Defaults to 127.0.0.1 \
-                    making the it only visable on localhost')
+@click.group()
+@click.version_option("1.0")
+def elekto():
+    """elekto - Software for the Elekto online elections system.
 
-parser.add_argument('--migrate',
-                    help='Create the database tables',
-                    action='store_true')
+    This tool is an command line interface for managing elekto's - meta states,
+    database sessions, and server. For getting started with elekto's installation
+    visit https://elekto.io/docs/getting-started/
 
-parser.add_argument('--sync',
-                    action="store_true",
-                    help="sync the database to the meta")
+    About Elekto: https://elekto.io/about
+    """
+    pass
 
-parser.add_argument('--run',
-                    action="store_true",
-                    help="Run the application at the debug mode")
+
+# These are subcommands supported by elekto's console. Commands are grouped based
+# on the task they perform.
+
+@elekto.group()
+def database():
+    """Collection of commands related to database and app's schema.
+
+    Elekto currently supports MYSQL as database backend, the database connection
+    string should be placed inside .env at the application's root.
+    """
+
+
+@elekto.group()
+def meta():
+    """Collection of commands related to application's meta files.
+
+    Elekto utilities gitops for operation, it requires a meta repository which
+    holds elections, candidates, and voters information in an strictly defined
+    format defined by elekto.
+
+    Visit the documentation for more information on creating elections, adding
+    candidates, and voters.
+    """
+
+
+# Elekto Commands
+
+@elekto.command("run")
+@click.option('-h', '--host', type=(str), default='127.0.0.1', help="Override the default running host of the application.")
+@click.option('-p', '--port', type=(int), default='5000', help="Override the default running port of the application.")
+@click.option('-e', '--env', type=(str), help="Force and application environment type.")
+def run(host, port, env):
+    """Run the application server on http://127/0.0.1:5000 (default)."""
+
+    # force the application to use the provided environment, if env option is
+    # not provided then the default environment is used from the cofing which
+    # is from defined in .env under APP_ENV.
+    if env:
+        APP.config['ENV'] = env
+
+    # Tweek some application's configurations and run the application (Auto
+    # reloading is done only when the application is in debug mode.)
+    APP.jinja_env.auto_reload = APP.config.get('DEBUG')
+    APP.run(debug=APP.config.get('DEBUG'), host=host, port=port)
+
+
+# Database Commands
+
+
+@database.command("migrate")
+def database_migrate():
+    """Run the migrations, this creates all tables required by elekto."""
+    # use the migrate utility from elekto's sql module.
+    models.sql.migrate(config.DATABASE_URL)
+    click.echo(click.style("Successfully created the database tables.", fg="green"))
+
+
+@database.command("test")
+def database_test():
+    """Verify the database session's connection  and tables existence."""
+    # Create a session similar what elekto uses for querying and updating and
+    # test using the utility in sql module.
+    session = models.sql.create_session(config.DATABASE_URL)
+    ok, err = models.sql.test_connection(session)
+
+    # Verify the test's result for execution and operation errors.
+    if ok:
+        click.echo(click.style("Database connection is okay", fg="green"))
+    else:
+        click.echo(err)
+
+    # Close the database session
+    session.close()
+
+
+# Meta Commands
+
+@meta.command("info")
+def meta_info():
+    """Print the info about the meta repository currently used by app."""
+    # Create the meta backend (same is used in the application)
+    backend = models.meta.Meta(config.META)
+
+    # Print Formatted information from the backend
+    click.echo(click.style("Meta info for elekto\n", fg="green"))
+    click.echo("Repository     : {}".format(click.style(backend.REMOTE, fg="yellow")))
+    click.echo("Branch         : {}".format(click.style(backend.BRANCH, fg="yellow")))
+    click.echo("Webhook Secret : {}".format(click.style(backend.SECRET, fg="yellow") if backend.SECRET else click.style("None", fg="red") ))
+    click.echo("Commit Hash    : {}".format(click.style(backend.latest_commit_hash(), fg="yellow")))
+    click.echo("Commit Msg     : {}".format(click.style(backend.latest_commit_msg(), fg="yellow")))
+    click.echo("Meta Path      : {}".format(click.style(backend.META, fg="yellow")))
+    click.echo("\nTo access and manipulate meta use the following prefix:\n  {}".format(click.style("{}".format(backend.pref), fg="bright_blue")))
+
+
+@meta.command("sync")
+def meta_sync():
+    """Sync the database with the meta files."""
+    # Create the meta backend and database session's instances
+    backend = models.meta.Meta(config.META)
+    session = models.sql.create_session(config.DATABASE_URL)
+
+    # if the meta directory does not exist, clone the meta repository otherwise
+    # pull the repository for updates.
+    if not os.path.exists(backend.META) or not os.path.isdir(backend.META):
+        backend.clone()
+    else:
+        backend.pull()
+
+    # Sync the updated meta with the database
+    click.echo(models.utils.sync(session, models.meta.Election.all()))
+
+    # Close the database session and acknowledge the user
+    session.close()
+
+
+@meta.command("clean")
+def meta_clean():
+    """Clean the meta files (deletes the local copy of the  repository)."""
+    # Create the meta backend deleted the entire folder
+    backend = models.meta.Meta(config.META)
+    os.system('rm -rf {}'.format(backend.META))
+    click.echo(click.style("Successfully deleted the {}.".format(backend.META), fg="green"))
 
 
 if __name__ == "__main__":
-    # ###################################################################### #
-    #                            /!\ console /!\                             #
-    # ###################################################################### #
-    args = parser.parse_args()
+    elekto()
 
-    if args.migrate:
-        from config import DATABASE_URL
-        from elekto.models.sql import migrate
-
-        print('# ----- Migrating the database and creating the tables ----- #')
-        migrate(DATABASE_URL)
-        exit()
-
-    if args.sync:
-        from config import META, DATABASE_URL
-        from elekto.models import meta
-        from elekto.models.sql import create_session
-        from elekto.models.utils import sync
-
-        SESSION = create_session(DATABASE_URL)
-        backend = meta.Meta(META)
-
-        print('# ----------- Syncing the meta with the database ----------- #')
-
-        if not os.path.exists(backend.META) or not os.path.isdir(backend.META):
-            backend.clone()
-        else:
-            backend.pull()
-
-        print(sync(SESSION, meta.Election.all()))
-        exit()
-
-    if args.run:
-        from elekto import APP
-
-        APP.jinja_env.auto_reload = APP.config.get('DEBUG')
-        APP.run(debug=APP.config.get('DEBUG'), host=args.host, port=args.port)
